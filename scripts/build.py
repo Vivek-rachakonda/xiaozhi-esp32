@@ -7,6 +7,7 @@ import zipfile
 import argparse
 import re
 import subprocess
+import shutil
 from pathlib import Path
 from typing import Any, Optional
 
@@ -54,8 +55,15 @@ def get_project_version() -> Optional[str]:
     return None
 
 
+def _get_idf_command() -> list[str]:
+    idf_cmd = shutil.which("idf.py.exe") or shutil.which("idf.py") or "idf.py"
+    if idf_cmd.endswith(".py"):
+        return [sys.executable, idf_cmd]
+    return [idf_cmd]
+
+
 def _run_idf(*args: str, preview: bool = False) -> None:
-    command = ["idf.py"]
+    command = _get_idf_command()
     if preview:
         command.append("--preview")
     command.extend(args)
@@ -727,7 +735,7 @@ def _detect_idf_version() -> tuple[int, int, int]:
 
     try:
         output = subprocess.run(
-            ["idf.py", "--version"],
+            [*_get_idf_command(), "--version"],
             check=True,
             capture_output=True,
             text=True,
